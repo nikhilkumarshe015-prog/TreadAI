@@ -1,0 +1,8 @@
+PySide6>=6.6.0
+yfinance>=0.2.40
+ccxt>=4.3.0
+google-genai>=2.4.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+requests>=2.31.0
+numpy>=1.24.0

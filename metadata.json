@@ -1,0 +1,6 @@
+{
+  "name": "AI Trading Assistant",
+  "description": "A professional Bloomberg Terminal-style AI Trading Assistant that scans markets, ranks assets, and provides actionable trade signals with technical overlays, risk calculators, and optional PySide6 desktop standalone source code export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
