@@ -172,6 +172,7 @@ const TRANSLATIONS = {
 
 const CRYPTO_TRADING_TYPES = [
   'Spot Trading',
+  'Perpetual Futures',
   'Futures Trading',
   'Options Trading'
 ];
@@ -201,6 +202,14 @@ const STRATEGY_GUIDELINES: Record<string, StrategyGuideline> = {
     riskProfile: 'Medium / Normal',
     explanation: 'Standard low-leverage buying and holding. Targets generally resolve over several days. Safe and optimal for steady wealth growth.',
     explanationHindi: 'बिना लीवरेज के सामान्य खरीदारी। टार्गेट आमतौर पर कुछ दिनों में पूरे होते हैं। स्थिर और सुरक्षित कमाई के लिए सर्वोत्तम।'
+  },
+  'Perpetual Futures': {
+    recommendedTimeframe: '15m',
+    idealTimeframeDesc: '15m or 1h or 4h',
+    targetDuration: 'Funding Rate Dependent (फंडिंग दर आधारित)',
+    riskProfile: 'Extremely High (अत्यधिक उच्च जोखिम)',
+    explanation: 'Leveraged derivatives with no expiration. Employs Funding Rates (typically every 8 hours) to peg price to the spot index. Crucial to actively manage your margin safety buffer and liquidation threshold.',
+    explanationHindi: 'बिना किसी एक्सपायरी के लीवरेज्ड ट्रेडिंग। हर 8 घंटे के फंडिंग रेट की वजह से स्पॉट प्राइस से जुड़ी होती है। लिक्विडेशन और मार्जिन सुरक्षा का बहुत बारीकी से ध्यान रखें।'
   },
   'Futures Trading': {
     recommendedTimeframe: '15m',
@@ -435,11 +444,66 @@ function detectCandlestickPatterns(candles: any[]): DetectedPattern[] {
   return patterns;
 }
 
+const ALL_STOCKS = [
+  { symbol: 'RELIANCE', name: 'Reliance Industries Ltd' },
+  { symbol: 'TCS', name: 'Tata Consultancy Services' },
+  { symbol: 'HDFCBANK', name: 'HDFC Bank Ltd' },
+  { symbol: 'INFY', name: 'Infosys Ltd' },
+  { symbol: 'ICICIBANK', name: 'ICICI Bank Ltd' },
+  { symbol: 'SBIN', name: 'State Bank of India' },
+  { symbol: 'TATAMOTORS', name: 'Tata Motors Ltd' },
+  { symbol: 'NIFTY_50', name: 'Nifty 50 Index' },
+  { symbol: 'BANKNIFTY', name: 'Bank Nifty Index' },
+  { symbol: 'HINDUNILVR', name: 'Hindustan Unilever Ltd' },
+  { symbol: 'ITC', name: 'ITC Ltd' },
+  { symbol: 'BHARTIARTL', name: 'Bharti Airtel Ltd' },
+  { symbol: 'LT', name: 'Larsen & Toubro Ltd' },
+  { symbol: 'AXISBANK', name: 'Axis Bank Ltd' },
+  { symbol: 'KOTAKBANK', name: 'Kotak Mahindra Bank Ltd' },
+  { symbol: 'ASIANPAINT', name: 'Asian Paints Ltd' },
+  { symbol: 'TITAN', name: 'Titan Company Ltd' },
+  { symbol: 'BAJFINANCE', name: 'Bajaj Finance Ltd' },
+  { symbol: 'MARUTI', name: 'Maruti Suzuki India Ltd' },
+  { symbol: 'SUNPHARMA', name: 'Sun Pharmaceutical Industries Ltd' },
+  { symbol: 'WIPRO', name: 'Wipro Ltd' },
+  { symbol: 'HCLTECH', name: 'HCL Technologies Ltd' },
+  { symbol: 'ADANIENT', name: 'Adani Enterprises Ltd' },
+  { symbol: 'NTPC', name: 'NTPC Ltd' },
+  { symbol: 'POWERGRID', name: 'Power Grid Corp of India Ltd' },
+  { symbol: 'COALINDIA', name: 'Coal India Ltd' }
+];
+
+const ALL_CRYPTOS = [
+  { symbol: 'BTCUSDT', name: 'Bitcoin / USDT' },
+  { symbol: 'ETHUSDT', name: 'Ethereum / USDT' },
+  { symbol: 'SOLUSDT', name: 'Solana / USDT' },
+  { symbol: 'ADAUSDT', name: 'Cardano / USDT' },
+  { symbol: 'XRPUSDT', name: 'Ripple / USDT' },
+  { symbol: 'DOGEUSDT', name: 'Dogecoin / USDT' },
+  { symbol: 'BNBUSDT', name: 'Binance Coin / USDT' },
+  { symbol: 'DOTUSDT', name: 'Polkadot / USDT' },
+  { symbol: 'MATICUSDT', name: 'Polygon / USDT' },
+  { symbol: 'LINKUSDT', name: 'Chainlink / USDT' },
+  { symbol: 'LTCUSDT', name: 'Litecoin / USDT' },
+  { symbol: 'BCHUSDT', name: 'Bitcoin Cash / USDT' },
+  { symbol: 'TRXUSDT', name: 'TRON / USDT' },
+  { symbol: 'SHIBUSDT', name: 'Shiba Inu / USDT' },
+  { symbol: 'AVAXUSDT', name: 'Avalanche / USDT' },
+  { symbol: 'ATOMUSDT', name: 'Cosmos / USDT' },
+  { symbol: 'NEARUSDT', name: 'Near Protocol / USDT' },
+  { symbol: 'FILUSDT', name: 'Filecoin / USDT' },
+  { symbol: 'UNIUSDT', name: 'Uniswap / USDT' },
+  { symbol: 'APTUSDT', name: 'Aptos / USDT' }
+];
+
 export default function App() {
   // Terminal UI State
   const [market, setMarket] = useState<'NSE' | 'Crypto'>('Crypto');
+  const [viewAllModal, setViewAllModal] = useState<'NSE' | 'Crypto' | null>(null);
+  const [modalSearch, setModalSearch] = useState<string>('');
   const [timeframe, setTimeframe] = useState<string>('1h');
   const [tradingType, setTradingType] = useState<string>('Spot Trading');
+  const [leverage, setLeverage] = useState<number>(10);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isScanningCustom, setIsScanningCustom] = useState<boolean>(false);
   const [lang, setLang] = useState<'English' | 'Hindi'>('English');
@@ -459,6 +523,14 @@ export default function App() {
   const [chartCandles, setChartCandles] = useState<any[]>([]);
   const [chartLoading, setChartLoading] = useState<boolean>(false);
   const [hoveredCandle, setHoveredCandle] = useState<any | null>(null);
+
+  // TradingView style indicator toggles and crosshair state
+  const [showMA10, setShowMA10] = useState<boolean>(true);
+  const [showEMA20, setShowEMA20] = useState<boolean>(true);
+  const [showBB, setShowBB] = useState<boolean>(true);
+  const [showSR, setShowSR] = useState<boolean>(true);
+  const [showAITargets, setShowAITargets] = useState<boolean>(true);
+  const [crosshair, setCrosshair] = useState<{ x: number; y: number; price: number; candle: any } | null>(null);
 
   // Risk sizer states
   const [accountEquity, setAccountEquity] = useState<number>(25000);
@@ -482,6 +554,22 @@ export default function App() {
 
   // Get active translation dictionary
   const t = TRANSLATIONS[lang];
+
+  // Reset modal search when modal is opened or closed
+  useEffect(() => {
+    setModalSearch('');
+  }, [viewAllModal]);
+
+  // Listen for Escape key to close the View All modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setViewAllModal(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // System time ticker
   const [currentTime, setCurrentTime] = useState<string>("");
@@ -649,6 +737,58 @@ export default function App() {
     }
   };
 
+  const handleSelectAssetFromModal = async (symbol: string, name: string, category: 'NSE' | 'Crypto') => {
+    setViewAllModal(null);
+    setMarket(category);
+    addConsoleLog(`[Terminal Direct] Navigating directory... Targeting ${symbol}`);
+    playTerminalBeep(880, 0.15, 'sine');
+    
+    const existing = scanResults.find(item => item.symbol === symbol && item.market === category);
+    if (existing) {
+      setSelectedAsset(existing);
+    } else {
+      setIsScanningCustom(true);
+      addConsoleLog(`Fetching technical series and indicators for custom target "${symbol}"...`);
+      try {
+        const res = await fetch(`/api/market-data?symbol=${symbol}&timeframe=${timeframe}&market=${category}`);
+        const data = await res.json();
+        
+        if (data.success && data.candles && data.candles.length > 0) {
+          const newAsset: ScanResult = {
+            symbol,
+            name: data.name || name || `${symbol} Asset`,
+            market: category,
+            indicators: data.indicators,
+            score: data.score,
+            signalStrength: data.signalStrength
+          };
+
+          setScanResults(prev => {
+            const exists = prev.some(item => item.symbol === symbol);
+            if (exists) {
+              return prev.map(item => item.symbol === symbol ? newAsset : item);
+            } else {
+              return [newAsset, ...prev];
+            }
+          });
+
+          setSelectedAsset(newAsset);
+          setChartCandles(data.candles);
+          addConsoleLog(`Successfully scanned and targets mapped for ${symbol}. Score: ${data.score}`);
+          setSearchQuery('');
+        } else {
+          addConsoleLog(`Failed to compile technical series for ${symbol}.`);
+          playTerminalBeep(300, 0.15, 'triangle');
+        }
+      } catch (e) {
+        addConsoleLog(`Failed to fetch live series for ${symbol}.`);
+        playTerminalBeep(300, 0.15, 'triangle');
+      } finally {
+        setIsScanningCustom(false);
+      }
+    }
+  };
+
   const fetchChartData = async (symbol: string, sector: string) => {
     setChartLoading(true);
     try {
@@ -752,25 +892,45 @@ export default function App() {
     const units = riskPerShare > 0 ? parseFloat((riskCash / riskPerShare).toFixed(4)) : 0;
     const totalCost = parseFloat((units * entry).toFixed(2));
     
-    const warning = totalCost > accountEquity * 2 
-      ? "⚠️ Warning: Excessive leverage allocation. Exceeds 2x cash equity limit." 
-      : (totalCost < 50 ? "⚠️ Note: Insufficient size parameters." : null);
+    let warning = null;
+    let marginRequired = totalCost;
+    let liquidationPrice = 0;
+
+    if (tradingType === 'Perpetual Futures') {
+      marginRequired = parseFloat((totalCost / leverage).toFixed(2));
+      liquidationPrice = isBuy 
+        ? entry * (1 - 1 / leverage + 0.005)
+        : entry * (1 + 1 / leverage - 0.005);
+      
+      if (leverage > 25) {
+        warning = `⚠️ HIGH LEVERAGE WARNING: ${leverage}x leverage has extremely high liquidation sensitivity (< ${parseFloat((100 / leverage).toFixed(2))}% asset move).`;
+      } else if (marginRequired > accountEquity) {
+        warning = "⚠️ MARGIN CALL: Required margin exceeds available account equity.";
+      }
+    } else {
+      if (totalCost > accountEquity * 2) {
+        warning = "⚠️ Warning: Excessive leverage allocation. Exceeds 2x cash equity limit.";
+      } else if (totalCost < 50) {
+        warning = "⚠️ Note: Insufficient size parameters.";
+      }
+    }
 
     return {
       units,
       totalCost,
       riskCash: parseFloat(riskCash.toFixed(2)),
+      marginRequired,
+      liquidationPrice: parseFloat(liquidationPrice.toFixed(4)),
       warning
     };
-  }, [selectedAsset, accountEquity, tradeRiskPct]);
+  }, [selectedAsset, accountEquity, tradeRiskPct, tradingType, leverage]);
 
   // SVG Chart Dimensions & Computations
-  const chartHeight = 220;
+  const chartHeight = 260;
   const chartWidth = 650;
   
   const minMaxCloses = useMemo(() => {
     if (chartCandles.length === 0) return { min: 0, max: 100 };
-    const prices = chartCandles.map(c => c.close);
     const highs = chartCandles.map(c => c.high);
     const lows = chartCandles.map(c => c.low);
     return {
@@ -780,11 +940,77 @@ export default function App() {
   }, [chartCandles]);
 
   // Map Price to SVG coordinates
-  const scaleY = (val: number) => {
-    const range = minMaxCloses.max - minMaxCloses.min;
-    if (range === 0) return chartHeight / 2;
-    return chartHeight - ((val - minMaxCloses.min) / range) * chartHeight;
-  };
+  const scaleY = useMemo(() => {
+    return (val: number) => {
+      const range = minMaxCloses.max - minMaxCloses.min;
+      if (range === 0) return chartHeight / 2;
+      return chartHeight - ((val - minMaxCloses.min) / range) * chartHeight;
+    };
+  }, [minMaxCloses, chartHeight]);
+
+  // Client-side technical indicator calculations for TradingView quality overlays
+  const ma10Points = useMemo(() => {
+    if (chartCandles.length < 10) return [];
+    const points: { x: number; y: number }[] = [];
+    const slotWidth = chartWidth / chartCandles.length;
+    for (let i = 0; i < chartCandles.length; i++) {
+      const slice = chartCandles.slice(Math.max(0, i - 9), i + 1);
+      const avg = slice.reduce((sum, c) => sum + c.close, 0) / slice.length;
+      points.push({
+        x: slotWidth * i + slotWidth / 2,
+        y: scaleY(avg)
+      });
+    }
+    return points;
+  }, [chartCandles, scaleY]);
+
+  const ema20Points = useMemo(() => {
+    if (chartCandles.length < 2) return [];
+    const points: { x: number; y: number }[] = [];
+    const slotWidth = chartWidth / chartCandles.length;
+    const alpha = 2 / (20 + 1);
+    let ema = chartCandles[0].close;
+    points.push({ x: slotWidth / 2, y: scaleY(ema) });
+    
+    for (let i = 1; i < chartCandles.length; i++) {
+      ema = chartCandles[i].close * alpha + ema * (1 - alpha);
+      points.push({
+        x: slotWidth * i + slotWidth / 2,
+        y: scaleY(ema)
+      });
+    }
+    return points;
+  }, [chartCandles, scaleY]);
+
+  const bbPoints = useMemo(() => {
+    if (chartCandles.length < 20) return null;
+    const slotWidth = chartWidth / chartCandles.length;
+    const upperPoints: { x: number; y: number }[] = [];
+    const lowerPoints: { x: number; y: number }[] = [];
+    
+    for (let i = 0; i < chartCandles.length; i++) {
+      const slice = chartCandles.slice(Math.max(0, i - 19), i + 1);
+      const avg = slice.reduce((sum, c) => sum + c.close, 0) / slice.length;
+      
+      const variance = slice.reduce((sum, c) => sum + Math.pow(c.close - avg, 2), 0) / slice.length;
+      const sd = Math.sqrt(variance);
+      
+      const x = slotWidth * i + slotWidth / 2;
+      upperPoints.push({ x, y: scaleY(avg + 2 * sd) });
+      lowerPoints.push({ x, y: scaleY(avg - 2 * sd) });
+    }
+    
+    const polyPoints = [
+      ...upperPoints.map(p => `${p.x},${p.y}`),
+      ...[...lowerPoints].reverse().map(p => `${p.x},${p.y}`)
+    ].join(' ');
+    
+    return {
+      upper: upperPoints.map(p => `${p.x},${p.y}`).join(' '),
+      lower: lowerPoints.map(p => `${p.x},${p.y}`).join(' '),
+      polygon: polyPoints
+    };
+  }, [chartCandles, scaleY]);
 
   // Download Python PySide6 Source Files dynamically
   const downloadPythonFiles = async () => {
@@ -948,6 +1174,24 @@ export default function App() {
               <span className="text-[10px] text-gray-400">Total Scanned: {scanResults.length}</span>
             </div>
 
+            {/* Quick Action Links to View All Stocks / Crypto */}
+            <div className="px-2 py-1.5 border-b border-[#1f2833] bg-[#0f1016] flex items-center justify-between gap-1.5">
+              <button
+                id="view-all-stocks-btn"
+                onClick={() => { setViewAllModal('NSE'); playTerminalBeep(750, 0.08); }}
+                className="flex-1 py-1 px-1.5 text-[9px] font-bold text-[#00e676] hover:bg-[#00e676]/10 border border-[#00e676]/30 hover:border-[#00e676] rounded transition-all text-center uppercase tracking-wider"
+              >
+                🔎 View All Stocks
+              </button>
+              <button
+                id="view-all-cryptos-btn"
+                onClick={() => { setViewAllModal('Crypto'); playTerminalBeep(750, 0.08); }}
+                className="flex-1 py-1 px-1.5 text-[9px] font-bold text-[#2979ff] hover:bg-[#2979ff]/10 border border-[#2979ff]/30 hover:border-[#2979ff] rounded transition-all text-center uppercase tracking-wider"
+              >
+                🪙 View All Crypto
+              </button>
+            </div>
+
             {/* Search Bar & Custom Asset Scanner */}
             <div className="p-2 border-b border-[#202124] bg-[#0d0e14] flex items-center space-x-2">
               <div className="relative flex-1">
@@ -1080,38 +1324,139 @@ export default function App() {
           
           {/* A. Dynamic Interactive SVG Candlestick Chart */}
           <div className="border border-[#1f2833] bg-[#0c0d12] rounded p-3 shadow-md flex flex-col">
-            <div className="flex items-center justify-between mb-2">
+            
+            {/* Top Bar of the Chart - Ticker, Timeframes & Indicators */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-[#1f2833] pb-2 mb-2">
               <div className="flex items-center space-x-2">
                 <span className="w-2 h-2 rounded-full bg-[#00e676] animate-pulse" />
                 <span className="font-bold text-gray-200">
                   {selectedAsset ? `${selectedAsset.name} (${selectedAsset.symbol})` : 'Select an Asset'}
                 </span>
-                <span className="text-[10px] text-gray-500">| Interval: {timeframe}</span>
+                <span className="text-[10px] text-gray-500">|</span>
+                
+                {/* TradingView-Style Timeframe Selector Buttons */}
+                <div className="flex items-center space-x-1 bg-[#151924] p-0.5 rounded border border-[#2e2f38]">
+                  {['15m', '1h', '4h', '1d'].map((tf) => (
+                    <button
+                      key={tf}
+                      onClick={() => { setTimeframe(tf); playTerminalBeep(500, 0.05); }}
+                      className={`px-2 py-0.5 text-[9px] font-bold rounded transition-all ${
+                        timeframe === tf
+                          ? 'bg-[#2979ff] text-white shadow-[0_0_8px_rgba(41,121,255,0.4)]'
+                          : 'text-gray-400 hover:text-white hover:bg-[#202636]'
+                      }`}
+                    >
+                      {tf}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="flex items-center space-x-3 text-[10px]">
-                <div className="flex items-center space-x-1">
-                  <div className="w-2.5 h-0.5 bg-[#ff1744] border-t border-dashed" />
-                  <span className="text-gray-400">Resist</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <div className="w-2.5 h-0.5 bg-[#2979ff] border-t border-dashed" />
-                  <span className="text-gray-400">Support</span>
-                </div>
+
+              {/* Indicator Toggle Toolbar - Quick Activation Badges */}
+              <div className="flex flex-wrap items-center gap-1.5 text-[9px]">
+                <button
+                  onClick={() => { setShowMA10(!showMA10); playTerminalBeep(450, 0.04); }}
+                  className={`px-2 py-0.5 rounded border font-bold transition-all ${
+                    showMA10 
+                      ? 'border-[#2979ff]/40 bg-[#2979ff]/15 text-[#2979ff]' 
+                      : 'border-[#2e2f38] bg-transparent text-gray-500 hover:border-gray-600'
+                  }`}
+                  title="Toggle 10-period Simple Moving Average"
+                >
+                  MA 10
+                </button>
+                <button
+                  onClick={() => { setShowEMA20(!showEMA20); playTerminalBeep(450, 0.04); }}
+                  className={`px-2 py-0.5 rounded border font-bold transition-all ${
+                    showEMA20 
+                      ? 'border-[#e040fb]/40 bg-[#e040fb]/15 text-[#e040fb]' 
+                      : 'border-[#2e2f38] bg-transparent text-gray-500 hover:border-gray-600'
+                  }`}
+                  title="Toggle 20-period Exponential Moving Average"
+                >
+                  EMA 20
+                </button>
+                <button
+                  onClick={() => { setShowBB(!showBB); playTerminalBeep(450, 0.04); }}
+                  className={`px-2 py-0.5 rounded border font-bold transition-all ${
+                    showBB 
+                      ? 'border-teal-500/40 bg-teal-500/15 text-teal-400' 
+                      : 'border-[#2e2f38] bg-transparent text-gray-500 hover:border-gray-600'
+                  }`}
+                  title="Toggle Bollinger Bands (20, 2)"
+                >
+                  BB
+                </button>
+                <button
+                  onClick={() => { setShowSR(!showSR); playTerminalBeep(450, 0.04); }}
+                  className={`px-2 py-0.5 rounded border font-bold transition-all ${
+                    showSR 
+                      ? 'border-yellow-500/40 bg-yellow-500/15 text-yellow-400' 
+                      : 'border-[#2e2f38] bg-transparent text-gray-500 hover:border-gray-600'
+                  }`}
+                  title="Toggle Support & Resistance Levels"
+                >
+                  S/R
+                </button>
+                <button
+                  onClick={() => { setShowAITargets(!showAITargets); playTerminalBeep(450, 0.04); }}
+                  className={`px-2 py-0.5 rounded border font-bold transition-all ${
+                    showAITargets 
+                      ? 'border-[#00e676]/40 bg-[#00e676]/15 text-[#00e676]' 
+                      : 'border-[#2e2f38] bg-transparent text-gray-500 hover:border-gray-600'
+                  }`}
+                  title="Toggle Entry, Stop Loss & Profit Targets"
+                >
+                  AI Target Lines
+                </button>
               </div>
             </div>
 
-            {/* Candlestick Coordinate display */}
-            <div className="bg-[#121319] p-1.5 border border-[#1f2833] rounded mb-2 flex items-center justify-between text-[10px] text-gray-400 overflow-x-auto whitespace-nowrap">
-              <span>O: <strong className="text-gray-200">{hoveredCandle ? hoveredCandle.open.toFixed(2) : (chartCandles[chartCandles.length - 1]?.open || '--')}</strong></span>
-              <span>H: <strong className="text-[#00e676]">{hoveredCandle ? hoveredCandle.high.toFixed(2) : (chartCandles[chartCandles.length - 1]?.high || '--')}</strong></span>
-              <span>L: <strong className="text-red-400">{hoveredCandle ? hoveredCandle.low.toFixed(2) : (chartCandles[chartCandles.length - 1]?.low || '--')}</strong></span>
-              <span>C: <strong className="text-gray-200">{hoveredCandle ? hoveredCandle.close.toFixed(2) : (chartCandles[chartCandles.length - 1]?.close || '--')}</strong></span>
-              <span>V: <strong className="text-gray-400">{hoveredCandle ? hoveredCandle.volume.toLocaleString() : (chartCandles[chartCandles.length - 1]?.volume || '--')}</strong></span>
-            </div>
+            {/* TradingView Immersive Chart Container */}
+            <div className="relative h-[260px] bg-[#131722] border border-[#2e2f38] rounded flex items-center justify-center overflow-hidden">
+              
+              {/* Dynamic Top-Left Legend / HUD Overlaid directly on the chart */}
+              {!chartLoading && chartCandles.length > 0 && (
+                <div className="absolute top-2 left-2 pointer-events-none z-10 flex flex-col space-y-1 bg-[#171b26]/90 backdrop-blur-sm p-1.5 rounded border border-[#2c3040] text-[9px]">
+                  <div className="flex items-center space-x-1.5 flex-wrap">
+                    <span className="font-bold text-gray-200">{selectedAsset?.symbol}</span>
+                    <span className="text-gray-400">·</span>
+                    <span className="text-gray-400 font-medium">{timeframe}</span>
+                    <span className="text-gray-500">·</span>
+                    <span className="text-gray-400">O</span>
+                    <span className={(hoveredCandle || chartCandles[chartCandles.length - 1])?.close >= (hoveredCandle || chartCandles[chartCandles.length - 1])?.open ? 'text-[#00e676]' : 'text-[#ff1744]'}>
+                      {(hoveredCandle || chartCandles[chartCandles.length - 1])?.open.toFixed(2)}
+                    </span>
+                    <span className="text-gray-400">H</span>
+                    <span className="text-[#00e676]">
+                      {(hoveredCandle || chartCandles[chartCandles.length - 1])?.high.toFixed(2)}
+                    </span>
+                    <span className="text-gray-400">L</span>
+                    <span className="text-[#ff1744]">
+                      {(hoveredCandle || chartCandles[chartCandles.length - 1])?.low.toFixed(2)}
+                    </span>
+                    <span className="text-gray-400">C</span>
+                    <span className={(hoveredCandle || chartCandles[chartCandles.length - 1])?.close >= (hoveredCandle || chartCandles[chartCandles.length - 1])?.open ? 'text-[#00e676]' : 'text-[#ff1744]'}>
+                      {(hoveredCandle || chartCandles[chartCandles.length - 1])?.close.toFixed(2)}
+                    </span>
+                    <span className="text-gray-400">V</span>
+                    <span className="text-gray-300">
+                      {(hoveredCandle || chartCandles[chartCandles.length - 1])?.volume.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-[8px] text-gray-500">
+                    {showMA10 && <span>MA(10): <strong className="text-[#2979ff] font-medium">Blue line</strong></span>}
+                    {showEMA20 && <span>EMA(20): <strong className="text-[#e040fb] font-medium">Purple line</strong></span>}
+                    {showBB && <span>BB(20, 2): <strong className="text-teal-400/80 font-medium">Teal channel</strong></span>}
+                  </div>
+                </div>
+              )}
 
-            <div className="relative h-[220px] bg-[#14151b] border border-[#2e2f38] rounded flex items-center justify-center overflow-hidden">
               {chartLoading ? (
-                <div className="text-gray-500 animate-pulse">Calculating indicators and drawing chart layers...</div>
+                <div className="text-gray-500 animate-pulse flex flex-col items-center">
+                  <span className="w-5 h-5 rounded-full border-2 border-[#00e676] border-t-transparent animate-spin mb-2" />
+                  <span className="text-xs font-mono">Running technical calculations...</span>
+                </div>
               ) : chartCandles.length > 0 ? (
                 <svg
                   width="100%"
@@ -1119,25 +1464,102 @@ export default function App() {
                   viewBox={`0 0 ${chartWidth} ${chartHeight}`}
                   preserveAspectRatio="none"
                   className="overflow-visible select-none"
+                  onMouseMove={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+
+                    const svgX = (x / rect.width) * chartWidth;
+                    const svgY = (y / rect.height) * chartHeight;
+
+                    const slotWidth = chartWidth / chartCandles.length;
+                    let index = Math.floor(svgX / slotWidth);
+                    if (index < 0) index = 0;
+                    if (index >= chartCandles.length) index = chartCandles.length - 1;
+
+                    const candle = chartCandles[index];
+                    if (candle) {
+                      const range = minMaxCloses.max - minMaxCloses.min;
+                      const price = minMaxCloses.max - (svgY / chartHeight) * range;
+
+                      setCrosshair({
+                        x: slotWidth * index + slotWidth / 2,
+                        y: svgY,
+                        price,
+                        candle
+                      });
+                      setHoveredCandle(candle);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setCrosshair(null);
+                    setHoveredCandle(null);
+                  }}
                 >
-                  {/* Grid Lines */}
-                  {[0.25, 0.5, 0.75].map((ratio, index) => (
+                  {/* Grid Lines - Horizontal */}
+                  {[0.15, 0.35, 0.55, 0.75, 0.95].map((ratio, index) => (
                     <line
-                      key={index}
+                      key={`h-grid-${index}`}
                       x1={0}
                       y1={chartHeight * ratio}
                       x2={chartWidth}
                       y2={chartHeight * ratio}
-                      stroke="#222329"
-                      strokeWidth={0.5}
-                      strokeDasharray="2 2"
+                      stroke="#1e222d"
+                      strokeWidth={0.75}
                     />
                   ))}
 
-                  {/* Calculated S/R levels */}
-                  {selectedAsset && (
+                  {/* Grid Lines - Vertical */}
+                  {[0.12, 0.25, 0.38, 0.5, 0.63, 0.75, 0.88].map((ratio, index) => (
+                    <line
+                      key={`v-grid-${index}`}
+                      x1={chartWidth * ratio}
+                      y1={0}
+                      x2={chartWidth * ratio}
+                      y2={chartHeight}
+                      stroke="#1e222d"
+                      strokeWidth={0.75}
+                    />
+                  ))}
+
+                  {/* Bollinger Bands Shaded Channel */}
+                  {showBB && bbPoints && (
                     <>
-                      {/* High / Resistance level estimation */}
+                      <polygon points={bbPoints.polygon} fill="#00bcd4" fillOpacity={0.03} />
+                      <polyline points={bbPoints.upper} fill="none" stroke="#00bcd4" strokeWidth={0.75} opacity={0.3} />
+                      <polyline points={bbPoints.lower} fill="none" stroke="#00bcd4" strokeWidth={0.75} opacity={0.3} />
+                    </>
+                  )}
+
+                  {/* Volume Bars - Draw at bottom 20% in background */}
+                  {(() => {
+                    const maxVol = Math.max(...chartCandles.map(c => c.volume || 1));
+                    return chartCandles.map((c, index) => {
+                      const slotWidth = chartWidth / chartCandles.length;
+                      const barWidth = Math.max(1.5, slotWidth * 0.55);
+                      const barX = slotWidth * index + (slotWidth - barWidth) / 2;
+                      const barHeight = ((c.volume || 0) / maxVol) * (chartHeight * 0.18);
+                      const barY = chartHeight - barHeight;
+                      const isBullish = c.close >= c.open;
+                      return (
+                        <rect
+                          key={`vol-${index}`}
+                          x={barX}
+                          y={barY}
+                          width={barWidth}
+                          height={barHeight}
+                          fill={isBullish ? '#00e676' : '#ff1744'}
+                          fillOpacity={0.12}
+                          pointerEvents="none"
+                        />
+                      );
+                    });
+                  })()}
+
+                  {/* Support & Resistance Levels (S/R Horizontals) */}
+                  {showSR && selectedAsset && (
+                    <>
+                      {/* Resistance Level */}
                       <line
                         x1={0}
                         y1={scaleY(selectedAsset.indicators.bollingerBands.upper)}
@@ -1146,9 +1568,13 @@ export default function App() {
                         stroke="#ff1744"
                         strokeWidth={0.75}
                         strokeDasharray="4 4"
-                        opacity={0.5}
+                        opacity={0.65}
                       />
-                      {/* Low / Support level estimation */}
+                      <text x={chartWidth - 5} y={scaleY(selectedAsset.indicators.bollingerBands.upper) - 4} fill="#ff1744" fontSize={7} textAnchor="end" opacity={0.8} fontFamily="monospace">
+                        R-LEVEL: {selectedAsset.indicators.bollingerBands.upper.toFixed(2)}
+                      </text>
+
+                      {/* Support Level */}
                       <line
                         x1={0}
                         y1={scaleY(selectedAsset.indicators.bollingerBands.lower)}
@@ -1157,13 +1583,16 @@ export default function App() {
                         stroke="#2979ff"
                         strokeWidth={0.75}
                         strokeDasharray="4 4"
-                        opacity={0.5}
+                        opacity={0.65}
                       />
+                      <text x={chartWidth - 5} y={scaleY(selectedAsset.indicators.bollingerBands.lower) - 4} fill="#2979ff" fontSize={7} textAnchor="end" opacity={0.8} fontFamily="monospace">
+                        S-LEVEL: {selectedAsset.indicators.bollingerBands.lower.toFixed(2)}
+                      </text>
                     </>
                   )}
 
-                  {/* Draw Targets and SL lines from active setup */}
-                  {aiSignal && (
+                  {/* Entry, Targets & Stop Loss (AI targets toggled) */}
+                  {showAITargets && aiSignal && (
                     <>
                       {/* Entry Price Line */}
                       <line
@@ -1211,7 +1640,29 @@ export default function App() {
                     </>
                   )}
 
-                  {/* Candlestick Wicks & Bodies */}
+                  {/* MA 10 Polyline */}
+                  {showMA10 && ma10Points.length > 0 && (
+                    <polyline
+                      fill="none"
+                      stroke="#2979ff"
+                      strokeWidth={1.2}
+                      opacity={0.8}
+                      points={ma10Points.map(p => `${p.x},${p.y}`).join(' ')}
+                    />
+                  )}
+
+                  {/* EMA 20 Polyline */}
+                  {showEMA20 && ema20Points.length > 0 && (
+                    <polyline
+                      fill="none"
+                      stroke="#e040fb"
+                      strokeWidth={1.2}
+                      opacity={0.8}
+                      points={ema20Points.map(p => `${p.x},${p.y}`).join(' ')}
+                    />
+                  )}
+
+                  {/* Candlesticks Bodies, Wicks and Hover Colliders */}
                   {chartCandles.map((c, index) => {
                     const slotWidth = chartWidth / chartCandles.length;
                     const centerX = slotWidth * index + slotWidth / 2;
@@ -1223,14 +1674,14 @@ export default function App() {
                     const bodyY1 = scaleY(isBullish ? c.close : c.open);
                     const bodyY2 = scaleY(isBullish ? c.open : c.close);
                     const bodyHeight = Math.max(1.5, Math.abs(bodyY2 - bodyY1));
-                    const bodyWidth = Math.max(1.5, slotWidth * 0.62);
+                    const bodyWidth = Math.max(1.5, slotWidth * 0.65);
                     const bodyX = slotWidth * index + (slotWidth - bodyWidth) / 2;
 
-                    const color = isBullish ? '#00e676' : '#ff1744';
+                    const color = isBullish ? '#26a69a' : '#ef5350'; // Official TV color palette
 
                     return (
-                      <g key={index}>
-                        {/* Shadow/Wick */}
+                      <g key={`candle-${index}`}>
+                        {/* Shadow / Wick */}
                         <line
                           x1={wickX1}
                           y1={wickY1}
@@ -1238,58 +1689,22 @@ export default function App() {
                           y2={wickY2}
                           stroke={color}
                           strokeWidth={1}
-                          opacity={0.8}
+                          opacity={0.85}
                         />
 
-                        {/* Solid/Hollow candle body */}
+                        {/* Candle Body */}
                         <rect
                           x={bodyX}
                           y={bodyY1}
                           width={bodyWidth}
                           height={bodyHeight}
-                          fill={isBullish ? 'transparent' : color}
+                          fill={color}
                           stroke={color}
-                          strokeWidth={1.2}
-                        />
-
-                        {/* Interactive Candle bar collider for hover details */}
-                        <rect
-                          x={slotWidth * index}
-                          y={0}
-                          width={slotWidth}
-                          height={chartHeight}
-                          fill="transparent"
-                          className="cursor-pointer hover:fill-white/5"
-                          onMouseEnter={() => setHoveredCandle(c)}
-                          onMouseLeave={() => setHoveredCandle(null)}
+                          strokeWidth={0.5}
                         />
                       </g>
                     );
                   })}
-
-                  {/* High-tech Moving Average Overlay Line */}
-                  {chartCandles.length > 10 && (
-                    <polyline
-                      fill="none"
-                      stroke="#2979ff"
-                      strokeWidth={1.2}
-                      opacity={0.7}
-                      points={(() => {
-                        const points: {x: number, y: number}[] = [];
-                        const period = 10;
-                        for (let i = 0; i < chartCandles.length; i++) {
-                          if (i < period - 1) continue;
-                          const slice = chartCandles.slice(i - period + 1, i + 1);
-                          const avg = slice.reduce((sum, cc) => sum + cc.close, 0) / period;
-                          const slotWidth = chartWidth / chartCandles.length;
-                          const x = slotWidth * i + slotWidth / 2;
-                          const y = scaleY(avg);
-                          points.push({ x, y });
-                        }
-                        return points.map(p => `${p.x},${p.y}`).join(' ');
-                      })()}
-                    />
-                  )}
 
                   {/* Candlestick Pattern Overlay Markers */}
                   {(() => {
@@ -1298,7 +1713,6 @@ export default function App() {
                       const slotWidth = chartWidth / chartCandles.length;
                       const x = slotWidth * pat.index + slotWidth / 2;
                       const candle = chartCandles[pat.index];
-                      // Position icon slightly above high or slightly below low depending on pattern type
                       const isBullish = pat.type === 'bullish';
                       const y = isBullish 
                         ? scaleY(candle.low) + 12 
@@ -1330,6 +1744,48 @@ export default function App() {
                       );
                     });
                   })()}
+
+                  {/* Crosshair Overlay (TradingView feel dashed lines & tags) */}
+                  {crosshair && (
+                    <g pointerEvents="none">
+                      {/* Vertical line at index */}
+                      <line
+                        x1={crosshair.x}
+                        y1={0}
+                        x2={crosshair.x}
+                        y2={chartHeight}
+                        stroke="#5c6370"
+                        strokeWidth={0.75}
+                        strokeDasharray="3 3"
+                      />
+                      {/* Horizontal line at cursor Y */}
+                      <line
+                        x1={0}
+                        y1={crosshair.y}
+                        x2={chartWidth}
+                        y2={crosshair.y}
+                        stroke="#5c6370"
+                        strokeWidth={0.75}
+                        strokeDasharray="3 3"
+                      />
+
+                      {/* Right-aligned Price Tag */}
+                      <g transform={`translate(${chartWidth - 55}, ${Math.max(10, Math.min(chartHeight - 20, crosshair.y - 8))})`}>
+                        <rect width="55" height="15" fill="#2a2e39" rx="2" stroke="#474f66" strokeWidth="0.75" />
+                        <text x="27.5" y="10.5" fill="#e1e2e6" fontSize={8} textAnchor="middle" fontFamily="monospace">
+                          {crosshair.price.toFixed(2)}
+                        </text>
+                      </g>
+
+                      {/* Bottom Time Tag */}
+                      <g transform={`translate(${Math.max(5, Math.min(chartWidth - 95, crosshair.x - 45))}, ${chartHeight - 16})`}>
+                        <rect width="90" height="14" fill="#2a2e39" rx="2" stroke="#474f66" strokeWidth="0.75" />
+                        <text x="45" y="9.5" fill="#e1e2e6" fontSize={7.5} textAnchor="middle" fontFamily="monospace">
+                          {new Date(crosshair.candle.time).toLocaleDateString(undefined, {month:'short', day:'numeric'})} {new Date(crosshair.candle.time).toLocaleTimeString(undefined, {hour:'2-digit', minute:'2-digit', hour12:false})}
+                        </text>
+                      </g>
+                    </g>
+                  )}
                 </svg>
               ) : (
                 <div className="text-gray-500">Run Scan to load interactive chart overlays</div>
@@ -1348,7 +1804,7 @@ export default function App() {
                   activeTab === 'ai' ? 'text-[#00e676] bg-[#0c0d12] border-b-2 border-b-[#00e676]' : 'text-gray-400 hover:text-gray-200 hover:bg-gray-900/50'
                 }`}
               >
-                AI TRADE ENGINE
+                AI TRADE ENGINE (GEMINI 2.5 PRO)
               </button>
               {market === 'NSE' && (
                 <button
@@ -1689,7 +2145,7 @@ export default function App() {
               {/* TAB 3: Capital Allocation Sizer */}
               {activeTab === 'risk' && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3 bg-[#121319] p-3 border border-[#1f2833] rounded">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-[#121319] p-3 border border-[#1f2833] rounded">
                     <div className="flex flex-col space-y-1">
                       <label className="text-[10px] text-gray-400">{t.equity} ($):</label>
                       <input
@@ -1709,11 +2165,27 @@ export default function App() {
                         className="bg-[#1a1b22] border border-[#2e2f38] text-gray-200 rounded p-1 focus:border-[#00e676] focus:outline-none"
                       />
                     </div>
+                    {tradingType === 'Perpetual Futures' && (
+                      <div className="flex flex-col space-y-1 sm:col-span-1 col-span-2">
+                        <label className="text-[10px] text-[#00e676] font-bold">Leverage: {leverage}x</label>
+                        <select
+                          value={leverage}
+                          onChange={(e) => { setLeverage(Number(e.target.value)); playTerminalBeep(450, 0.05); }}
+                          className="bg-[#1a1b22] border border-[#2e2f38] text-[#00e676] font-bold rounded p-1.5 focus:border-[#00e676] focus:outline-none text-[11px]"
+                        >
+                          {[1, 2, 5, 10, 15, 20, 25, 50, 75, 100].map((lev) => (
+                            <option key={lev} value={lev} className="bg-[#0c0d12] text-gray-200">
+                              ⚡ {lev}x
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   {calculatedRiskAlloc && (
                     <div className="space-y-2 text-[10px]">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         <div className="bg-[#121319] p-2 rounded border border-[#1f2833]">
                           <span className="block text-gray-400">{t.suggestedUnits}</span>
                           <strong className="text-[#00e676] text-xs font-mono">{calculatedRiskAlloc.units} units</strong>
@@ -1726,17 +2198,46 @@ export default function App() {
                           <span className="block text-gray-400">{t.riskCash}</span>
                           <strong className="text-red-400 text-xs">${calculatedRiskAlloc.riskCash}</strong>
                         </div>
-                        <div className="bg-[#121319] p-2 rounded border border-[#1f2833]">
-                          <span className="block text-gray-400">{t.suggestedProfit}</span>
-                          <strong className="text-[#00e676] text-xs">
-                            ${(calculatedRiskAlloc.units * (selectedAsset?.indicators.atr || 5)).toFixed(2)}
-                          </strong>
-                        </div>
+
+                        {tradingType === 'Perpetual Futures' ? (
+                          <>
+                            <div className="bg-[#121319] p-2 rounded border border-[#1f2833]">
+                              <span className="block text-[#00e676] font-bold">Margin Required</span>
+                              <strong className="text-[#00e676] text-xs font-mono">${calculatedRiskAlloc.marginRequired}</strong>
+                            </div>
+                            <div className="bg-[#121319] p-2 rounded border border-[#1f2833]">
+                              <span className="block text-amber-400 font-bold">Est. Liquidation Price</span>
+                              <strong className="text-amber-400 text-xs font-mono">
+                                ${calculatedRiskAlloc.liquidationPrice > 0 ? calculatedRiskAlloc.liquidationPrice.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4}) : 'N/A'}
+                              </strong>
+                            </div>
+                            <div className="bg-[#121319] p-2 rounded border border-[#1f2833]">
+                              <span className="block text-gray-400">Funding Rate (Simulated)</span>
+                              <strong className="text-blue-400 text-xs font-mono">+0.0125%</strong>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="bg-[#121319] p-2 rounded border border-[#1f2833] sm:col-span-3 col-span-2 flex justify-between items-center">
+                            <span className="text-gray-400">{t.suggestedProfit}:</span>
+                            <strong className="text-[#00e676] text-xs">
+                              ${(calculatedRiskAlloc.units * (selectedAsset?.indicators.atr || 5)).toFixed(2)}
+                            </strong>
+                          </div>
+                        )}
                       </div>
 
                       {calculatedRiskAlloc.warning && (
-                        <div className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded">
+                        <div className="p-2 bg-red-500/10 border border-red-500/20 text-red-400 rounded text-[9.5px] leading-tight">
                           {calculatedRiskAlloc.warning}
+                        </div>
+                      )}
+
+                      {tradingType === 'Perpetual Futures' && (
+                        <div className="p-2.5 bg-[#0e1017] border border-[#1f2833] rounded text-[9.5px] text-gray-400 space-y-1 leading-normal">
+                          <p className="font-bold text-gray-300">📊 Accurate Perpetual Futures Analysis advice:</p>
+                          <p>• Positions are held indefinitely without contract expiration. Leverage magnifying wins/losses runs both ways.</p>
+                          <p>• Funding fees occur every 8h. Since the rate is positive (<span className="text-blue-400">+0.0125%</span>), Long positions actively pay Shorts to balance index premium.</p>
+                          <p>• Always place your Stop Loss (<span className="text-red-400">${selectedAsset ? (selectedAsset.score > 50 ? (selectedAsset.indicators.currentPrice * 0.985).toFixed(2) : (selectedAsset.indicators.currentPrice * 1.015).toFixed(2)) : '0.00'}</span>) above/below the liquidation price to protect capital.</p>
                         </div>
                       )}
                     </div>
@@ -1859,6 +2360,127 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* 4. VIEW ALL ASSETS MODAL (STOCK & CRYPTO OVERLAYS) */}
+      {viewAllModal && (
+        <div 
+          className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-all duration-300"
+          onClick={() => setViewAllModal(null)}
+        >
+          <div 
+            className="bg-[#0b0c10] border border-[#1f2833] max-w-4xl w-full max-h-[85vh] rounded-md flex flex-col overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.8)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-4 py-3 border-b border-[#1f2833] flex items-center justify-between bg-[#111218]">
+              <div className="flex items-center space-x-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${viewAllModal === 'NSE' ? 'bg-[#00e676]' : 'bg-[#2979ff]'} animate-pulse`} />
+                <h3 className="font-bold text-xs tracking-widest text-gray-200 uppercase font-mono">
+                  {viewAllModal === 'NSE' ? 'QUANT DIRECTORY - ALL CORED NSE STOCKS' : 'QUANT DIRECTORY - ALL LIQUID CRYPTOCURRENCIES'}
+                </h3>
+              </div>
+              <button 
+                onClick={() => { setViewAllModal(null); playTerminalBeep(400, 0.05); }}
+                className="text-gray-400 hover:text-white transition-colors text-[10px] font-mono font-bold bg-[#1b1c23] hover:bg-gray-800 px-2.5 py-1 rounded border border-[#2e2f38]"
+              >
+                ESC [X]
+              </button>
+            </div>
+
+            {/* Modal Search Filter */}
+            <div className="p-3 bg-[#0d0e14] border-b border-[#1f2833] flex items-center space-x-3">
+              <span className="text-[10px] text-gray-400 font-bold uppercase shrink-0 font-mono">Filter Directory:</span>
+              <input
+                type="text"
+                placeholder={`Search among ${viewAllModal === 'NSE' ? ALL_STOCKS.length : ALL_CRYPTOS.length} assets by symbol or name...`}
+                value={modalSearch}
+                onChange={(e) => setModalSearch(e.target.value)}
+                className="flex-1 bg-[#121319] border border-[#2e2f38] text-gray-200 rounded px-3 py-2 text-xs focus:border-[#00e676] focus:outline-none placeholder:text-gray-600 font-mono"
+                autoFocus
+              />
+            </div>
+
+            {/* Modal Table Body */}
+            <div className="flex-1 overflow-y-auto p-2 bg-[#08090d]">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[#1f2833] text-gray-400 bg-[#0c0d12] text-[10px] sticky top-0 z-10 font-mono">
+                    <th className="p-2.5 font-bold uppercase">Asset / Symbol</th>
+                    <th className="p-2.5 font-bold uppercase">Company / Instrument Name</th>
+                    <th className="p-2.5 font-bold text-right uppercase">Market Feed</th>
+                    <th className="p-2.5 font-bold text-center uppercase">Last Price</th>
+                    <th className="p-2.5 font-bold text-center uppercase">Quant Score</th>
+                    <th className="p-2.5 font-bold text-center uppercase">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#161a22] text-[11px] font-mono">
+                  {(viewAllModal === 'NSE' ? ALL_STOCKS : ALL_CRYPTOS)
+                    .filter(item => 
+                      item.symbol.toLowerCase().includes(modalSearch.toLowerCase()) || 
+                      item.name.toLowerCase().includes(modalSearch.toLowerCase())
+                    )
+                    .map((item) => {
+                      const scanned = scanResults.find(r => r.symbol === item.symbol && r.market === viewAllModal);
+                      const lastPrice = scanned?.indicators?.close;
+                      const score = scanned?.score;
+
+                      return (
+                        <tr 
+                          key={item.symbol} 
+                          onClick={() => handleSelectAssetFromModal(item.symbol, item.name, viewAllModal)}
+                          className="hover:bg-[#121620] cursor-pointer transition-colors border-b border-[#111]"
+                        >
+                          <td className="p-2.5 font-bold text-gray-200">
+                            <span className={viewAllModal === 'NSE' ? 'text-[#00e676]' : 'text-[#2979ff]'}>{item.symbol}</span>
+                          </td>
+                          <td className="p-2.5 text-gray-400">{item.name}</td>
+                          <td className="p-2.5 text-right font-mono text-gray-500">
+                            {viewAllModal === 'NSE' ? 'NSE LIVE FEED' : 'BINANCE SPOT'}
+                          </td>
+                          <td className="p-2.5 text-center font-mono text-gray-300">
+                            {lastPrice !== undefined 
+                              ? (viewAllModal === 'NSE' ? `₹${lastPrice.toLocaleString()}` : `$${lastPrice.toLocaleString()}`)
+                              : <span className="text-gray-600">--</span>}
+                          </td>
+                          <td className="p-2.5 text-center font-mono font-bold">
+                            {score !== undefined ? (
+                              <span className={score >= 70 ? 'text-[#00e676]' : score <= 40 ? 'text-red-500' : 'text-yellow-500'}>
+                                {score} / 100
+                              </span>
+                            ) : (
+                              <span className="text-gray-600">--</span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-center">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectAssetFromModal(item.symbol, item.name, viewAllModal);
+                              }}
+                              className={`px-2.5 py-1 text-[9px] font-bold border rounded transition-all tracking-wider uppercase ${
+                                viewAllModal === 'NSE' 
+                                  ? 'bg-[#00e676]/10 hover:bg-[#00e676] text-[#00e676] hover:text-black border-[#00e676]/30 hover:border-transparent'
+                                  : 'bg-[#2979ff]/10 hover:bg-[#2979ff] text-[#2979ff] hover:text-white border-[#2979ff]/30 hover:border-transparent'
+                              }`}
+                            >
+                              ANALYZE
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Footer Status */}
+            <div className="px-4 py-2.5 border-t border-[#1f2833] bg-[#0c0d12] flex items-center justify-between text-[10px] text-gray-500 font-mono">
+              <span>Bloomberg Terminal Quant Engine Core v4.2.1-Live</span>
+              <span className="text-[#00e676]">Click 'ANALYZE' to instantly tune terminal frequencies to target coordinates.</span>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
